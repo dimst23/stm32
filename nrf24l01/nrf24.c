@@ -330,6 +330,36 @@ void nRF24_DisableAA(uint8_t pipe) {
 	}
 }
 
+// Enable dynamic payload
+// input:
+//   pipe - number of the RX pipe, value from 0 to 5
+void nRF24_EnableDPL(uint8_t pipe)
+{
+	uint8_t reg;
+	
+	reg = nRF24_ReadReg(nRF24_REG_FEATURE) | nRF24_FEATURE_EN_DYNPL; //Set the EN_DYNPL bit
+	nRF24_WriteReg(nRF24_REG_FEATURE, reg); //Enable dynamic payload first
+	reg = nRF24_ReadReg(nRF24_REG_DYNPD) | (1 << pipe); //Set the pipe for the register
+	nRF24_WriteReg(nRF24_REG_DYNPD, reg); //Write the register value
+}
+
+// Disable dynamic payload
+// input:
+//   pipe - number of the RX pipe, value from 0 to 5
+void nRF24_DisableDPL(uint8_t pipe)
+{
+	uint8_t reg;
+	
+	reg = nRF24_ReadReg(nRF24_REG_FEATURE) & ~nRF24_FEATURE_EN_DYNPL; //Clear the EN_DYNPL bit
+	nRF24_WriteReg(nRF24_REG_FEATURE, reg); //Disable dynamic payload
+	if(pipe > 5) {nRF24_WriteReg(nRF24_REG_DYNPD, 0x00);} //Disable dynamic payload on all pipes
+	else
+	{
+		reg = nRF24_ReadReg(nRF24_REG_DYNPD) & ~(1 << pipe); //Clear the pipe bit
+		nRF24_WriteReg(nRF24_REG_DYNPD, reg); //Write the newly formed register
+	}
+}
+
 // Get value of the STATUS register
 // return: value of STATUS register
 uint8_t nRF24_GetStatus(void) {
@@ -420,15 +450,17 @@ nRF24_RXResult nRF24_ReadPayload(uint8_t *pBuf, uint8_t *length) {
 	pipe = (nRF24_ReadReg(nRF24_REG_STATUS) & nRF24_MASK_RX_P_NO) >> 1;
 
 	// RX FIFO empty?
-	if (pipe < 6) {
+	if (pipe < 6) 
+	{
 		// Get payload length
-		*length = nRF24_ReadReg(nRF24_RX_PW_PIPE[pipe]);
+		if(nRF24_ReadReg(nRF24_REG_FEATURE) & nRF24_FEATURE_EN_DYNPL) 
+		{*length = nRF24_ReadReg(nRF24_CMD_R_RX_PL_WID);} //If dynamic payload is enabled
+		else 
+		{*length = nRF24_ReadReg(nRF24_RX_PW_PIPE[pipe]);} //If we have static payload
 
-		// Read a payload from the RX FIFO
-		if (*length) {
-			nRF24_ReadMBReg(nRF24_CMD_R_RX_PAYLOAD, pBuf, *length);
-		}
-
+		if (*length) {nRF24_ReadMBReg(nRF24_CMD_R_RX_PAYLOAD, pBuf, *length);} // Read a payload from the RX FIFO
+		
+		nRF24_FlushRX(); //Clear the RX buffer, to remove any remaining bytes (this is temporary, since it is a bad solution)
 		return ((nRF24_RXResult)pipe);
 	}
 
