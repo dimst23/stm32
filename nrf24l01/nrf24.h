@@ -16,6 +16,7 @@
 #define nRF24_CMD_REUSE_TX_PL      (uint8_t)0xE3 // Reuse TX payload
 #define nRF24_CMD_LOCK_UNLOCK      (uint8_t)0x50 // Lock/unlock exclusive features
 #define nRF24_CMD_NOP              (uint8_t)0xFF // No operation (used for reading status register)
+#define nRF24_CMD_R_RX_PL_WID	   (uint8_t)0x60 // Read the payload length in RX FIFO (only if DPL is enabled)
 
 // nRF24L0 register definitions
 #define nRF24_REG_CONFIG           (uint8_t)0x00 // Configuration register
@@ -51,6 +52,7 @@
 #define nRF24_FLAG_RX_DR           (uint8_t)0x40 // RX_DR bit (data ready RX FIFO interrupt)
 #define nRF24_FLAG_TX_DS           (uint8_t)0x20 // TX_DS bit (data sent TX FIFO interrupt)
 #define nRF24_FLAG_MAX_RT          (uint8_t)0x10 // MAX_RT bit (maximum number of TX retransmits interrupt)
+#define nRF24_FEATURE_EN_DYNPL	   (uint8_t)0x04 // Dynamic payload bit on FEATURE register
 
 // Register masks definitions
 #define nRF24_MASK_REG_MAP         (uint8_t)0x1F // Mask bits[4:0] for CMD_RREG and CMD_WREG commands
@@ -223,6 +225,8 @@ void nRF24_SetRXPipe(uint8_t pipe, uint8_t aa_state, uint8_t payload_len);
 void nRF24_ClosePipe(uint8_t pipe);
 void nRF24_EnableAA(uint8_t pipe);
 void nRF24_DisableAA(uint8_t pipe);
+void nRF24_EnableDPL(uint8_t pipe);
+void nRF24_DisableDPL(uint8_t pipe);
 
 uint8_t nRF24_GetStatus(void);
 uint8_t nRF24_GetIRQFlags(void);
