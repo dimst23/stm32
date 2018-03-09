@@ -71,6 +71,10 @@
 // Fake address to test transceiver presence (5 bytes long)
 #define nRF24_TEST_ADDR            "nRF24"
 
+//Timeout counter is dependant on the CPU speed
+//It is used in order to avoid an infinite loop
+#define nRF24_WAIT_TIMEOUT         (uint32_t)0x000FFFFF
+
 
 // Retransmit delay
 enum {
@@ -171,6 +175,14 @@ typedef enum {
 	nRF24_RX_EMPTY  = (uint8_t)0xff  // The RX FIFO is empty
 } nRF24_RXResult;
 
+// Result of packet transmission
+typedef enum 
+{
+	nRF24_TX_ERROR  = (uint8_t)0x00, // Unknown error
+	nRF24_TX_SUCCESS,                // Packet has been transmitted successfully
+	nRF24_TX_TIMEOUT,                // It was timeout during packet transmit
+	nRF24_TX_MAXRT                   // Transmit failed with maximum auto retransmit count
+} nRF24_TXResult;
 
 // Addresses of the RX_PW_P# registers
 static const uint8_t nRF24_RX_PW_PIPE[6] = {
